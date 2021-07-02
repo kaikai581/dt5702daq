@@ -91,7 +91,7 @@ int FEBDTP::Send_pkt(FEBDTP_PKT *pkt, int len, int timeout_us)
   struct ifreq if_idx;
   struct ifreq if_mac;
   int numbytes;
-  int retnumbytes;
+  int retnumbytes = 0;
   int numpacks = 0;
   unsigned char thisdstmac[6];
   memcpy(thisdstmac, pkt->dst_mac, 6);
@@ -413,7 +413,6 @@ void FEBDTP::CMD_stoa(unsigned short cmd, char *str)
 
 void FEBDTP::Print_gpkt(int truncat)
 {
-  int jj;
   char str[32];
   printf("(%02x %02x %02x %02x %02x %02x) => ", gpkt.src_mac[0], gpkt.src_mac[1], gpkt.src_mac[2], gpkt.src_mac[3], gpkt.src_mac[4], gpkt.src_mac[5]);
   printf("(%02x %02x %02x %02x %02x %02x) ", gpkt.dst_mac[0], gpkt.dst_mac[1], gpkt.dst_mac[2], gpkt.dst_mac[3], gpkt.dst_mac[4], gpkt.dst_mac[5]);
@@ -520,8 +519,6 @@ int FEBDTP::ReadBitStream(const char *fname, unsigned char *buf) // read CITIROC
   if (file <= 0)
     return 0;
   char line[128];
-  char bits[128];
-  char comment[128];
   char bit;
   int ptr, byteptr;
   int bitlen = 0;
@@ -533,7 +530,7 @@ int FEBDTP::ReadBitStream(const char *fname, unsigned char *buf) // read CITIROC
     byteptr = 0;
     //	  	printf("%d: %s",bitlen,line);
 
-    while (bit != 0x27 && bit != 0 && ptr < sizeof(line) && bitlen < MAXPACKLEN) // ASCII(0x27)= '
+    while (bit != 0x27 && bit != 0 && ptr < (int)sizeof(line) && bitlen < MAXPACKLEN) // ASCII(0x27)= '
     {
       bit = line[ptr];
       ptr++;
@@ -738,7 +735,6 @@ int FEBDTP::WriteBitStreamAnnotated(const char *fname, unsigned char *buf, int b
 
 unsigned char SwapBits(unsigned char bt)
 {
-  int i = 0;
   unsigned char retval = 0;
   retval |= (bt & 0x01) << 7;
   retval |= (bt & 0x02) << 5;
@@ -778,7 +774,9 @@ void FEBDTP::ReadLVBitStream(const char *fname, unsigned char *buf, bool rev)
   char line[1024];
   unsigned int ibt;
   FILE *file = fopen(fname, "r");
-  fgets(line, sizeof(line), file); //one line only
+  if(fgets(line, sizeof(line), file) == NULL){
+    perror("FEBDTP::ReadLVBitStream returns NULL.");
+  } //one line only
   if (!rev)
     for (i = 0; i < 143; i++) //Read normal ordered file
     {

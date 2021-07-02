@@ -1,5 +1,6 @@
 //#include <vector>
 
+#include <array>
 #include <net/if.h>
 #include <unistd.h>
 
@@ -84,6 +85,9 @@ public:
   unsigned char brcmac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
   int nclients = 0;
   unsigned char macs[256][6]; //list of detected clients
+  // modification to this 2D array.
+  // ref: https://stackoverflow.com/questions/60950999/how-to-bind-c-structure-with-an-array-of-another-structre-as-a-member-using-pyb
+  // std::array<std::array<unsigned char, 6>, 256> macs;
   int Verbose = 0;
 
   unsigned short VCXO = 500;
