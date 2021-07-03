@@ -75,14 +75,14 @@ void FEBDTP::Init_FEBDTP_pkt(FEBDTP_PKT *pkt, unsigned char *src, unsigned char 
 void FEBDTP::Init_FEBDTP_pkt(FEBDTP_PKT *pkt)
 {
   memcpy(&(pkt->src_mac), srcmac, 6);
-  memcpy(&(pkt->dst_mac), dstmac, 6);
+  memcpy(&(pkt->dst_mac), dstmac.data(), 6);
   pkt->iptype = 0x0108; // IP type 0x0801
 }
 
 void FEBDTP::Init_FEBDTP_pkt()
 {
   memcpy(&(gpkt.src_mac), srcmac, 6);
-  memcpy(&(gpkt.dst_mac), dstmac, 6);
+  memcpy(&(gpkt.dst_mac), dstmac.data(), 6);
   gpkt.iptype = 0x0108; // IP type 0x0801
 }
 
@@ -212,13 +212,13 @@ int FEBDTP::SendCMD(unsigned char *mac, unsigned short cmd, unsigned short reg, 
     tout = 1000; //timeout 1ms
     break;
   case FEB_SET_RECV:
-    memcpy(&gpkt.Data, buf, 6); // Copy source mac to the data buffer
+    memcpy(gpkt.Data.data(), buf, 6); // Copy source mac to the data buffer
     gpkt.REG = VCXO;
     tout = 500; //timeout 0.5ms
     break;
   case FEB_WR_SR:
     tout = 50000;               //timeout 50ms
-    memcpy(&gpkt.Data, buf, 1); // Copy register value to the data buffer
+    memcpy(gpkt.Data.data(), buf, 1); // Copy register value to the data buffer
     break;
   case FEB_WR_SRFF:
   case FEB_WR_SCR:
@@ -226,7 +226,7 @@ int FEBDTP::SendCMD(unsigned char *mac, unsigned short cmd, unsigned short reg, 
   case FEB_WR_FIL:
   case FEB_WR_CDR:
     tout = 50000;                 //timeout 50ms
-    memcpy(&gpkt.Data, buf, 256); // Copy 256 register values to the data buffer
+    memcpy(gpkt.Data.data(), buf, 256); // Copy 256 register values to the data buffer
     packlen = 256 + 18;
     break;
   case FEB_RD_CDR:
@@ -234,11 +234,11 @@ int FEBDTP::SendCMD(unsigned char *mac, unsigned short cmd, unsigned short reg, 
     break;
   case FEB_RD_FW:
   case FEB_WR_FW:
-    memcpy(&gpkt.Data, buf, 5); // Copy address and numblocks
+    memcpy(gpkt.Data.data(), buf, 5); // Copy address and numblocks
     tout = 50000;               //timeout 50ms
     break;
   case FEB_DATA_FW:
-    memcpy(&gpkt.Data, buf, 1024); // Copy 1kB  data buffer
+    memcpy(gpkt.Data.data(), buf, 1024); // Copy 1kB  data buffer
     packlen = 1024 + 18;
     tout = 5000; //timeout 5ms
     break;
@@ -258,7 +258,7 @@ int FEBDTP::SendCMD(unsigned char *mac, unsigned short cmd, unsigned short reg, 
   case FEB_OK_PMR:
   case FEB_OK_FIL:
   case FEB_OK_FW:
-    memcpy(buf, &gpkt.Data, (packlen > 256) ? 256 : 1); // Copy register value(s) from the data buffer
+    memcpy(buf, gpkt.Data.data(), (packlen > 256) ? 256 : 1); // Copy register value(s) from the data buffer
     retval = 1;
     break;
   case FEB_DATA_CDR:
@@ -460,15 +460,15 @@ void FEBDTP::Print_gpkt_evts(int truncat)
     //	printf("%02x",gpkt.Data[jj]); jj++;
     //	printf("%02x",gpkt.Data[jj]); jj++;
 
-    printf("Flags: 0x%08x ", *(unsigned int *)(&gpkt.Data[jj]));
+    printf("Flags: 0x%08x ", *(unsigned int *)(&gpkt.Data.data()[jj]));
     jj = jj + 4;
-    T0 = *(unsigned int *)(&gpkt.Data[jj]);
+    T0 = *(unsigned int *)(&gpkt.Data.data()[jj]);
     jj = jj + 4;
     //	printf("T0: %02x",gpkt.Data[jj]); jj++;
     //	printf("%02x",gpkt.Data[jj]); jj++;
     //	printf("%02x",gpkt.Data[jj]); jj++;
     //	printf("%02x",gpkt.Data[jj]); jj++;
-    T1 = *(unsigned int *)(&gpkt.Data[jj]);
+    T1 = *(unsigned int *)(&gpkt.Data.data()[jj]);
     jj = jj + 4;
     printf("T0=%u ns, T1=%u ns,  ", T0, T1);
 
@@ -483,7 +483,7 @@ void FEBDTP::Print_gpkt_evts(int truncat)
     //      for(kk=0; kk<32; kk++){ printf("%02x ",gpkt.Data[jj]);jj++; } //if(jj>=(truncat-18)) return;}
     for (kk = 0; kk < 32; kk++)
     {
-      adc = *(unsigned short *)(&gpkt.Data[jj]);
+      adc = *(unsigned short *)(&gpkt.Data.data()[jj]);
       jj++;
       jj++;
       printf("%04u ", adc);
@@ -498,14 +498,14 @@ int FEBDTP::ScanClients() // Scan MAC addresses of FEBs within reach
   int num = 0;
   for (num = 0; num < 255; num++)
   {
-    memcpy(macs[nclients], dstmac, 6);
+    memcpy(macs.data()[nclients].data(), dstmac.data(), 6);
     macs[nclients][5] = num;
-    if (SendCMD(macs[nclients], FEB_SET_RECV, 0, srcmac) > 0)
+    if (SendCMD(macs.data()[nclients].data(), FEB_SET_RECV, 0, srcmac) > 0)
     {
       for (int i = 0; i < 5; i++)
         printf("%02x:", macs[nclients][i]);
       printf("%02x ", macs[nclients][5]);
-      printf("%s\n", gpkt.Data);
+      printf("%s\n", gpkt.Data.data());
       nclients++;
     } // client reply received
   }
@@ -793,7 +793,11 @@ void FEBDTP::ReadLVBitStream(const char *fname, unsigned char *buf, bool rev)
 
   fclose(file);
 }
-void FEBDTP::setPacketHandler(void (*fhandler)(int))
+// void FEBDTP::setPacketHandler(void (*fhandler)(int))
+// {
+//   fPacketHandler = fhandler;
+// }
+void FEBDTP::setPacketHandler(const std::function<void(int)> fhandler)
 {
   fPacketHandler = fhandler;
 }

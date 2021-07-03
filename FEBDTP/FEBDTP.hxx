@@ -1,6 +1,7 @@
 //#include <vector>
 
 #include <array>
+#include <functional>
 #include <net/if.h>
 #include <unistd.h>
 
@@ -64,7 +65,8 @@ typedef struct
   unsigned short iptype;          /*!< IP type*/
   unsigned short CMD;             /*!< FEBDTP command field*/
   unsigned short REG;             /*!< FEBDTP register field*/
-  unsigned char Data[MAXPAYLOAD]; /*!< FEBDTP data field, 50-8=42 bytes*/
+  // unsigned char Data[MAXPAYLOAD]; /*!< FEBDTP data field, 50-8=42 bytes*/
+  std::array<unsigned char, MAXPAYLOAD> Data;
 
 } FEBDTP_PKT; // packet total length 64 bytes, 42 useful data
 
@@ -81,13 +83,14 @@ class FEBDTP
 public:
   FEBDTP_PKT gpkt;
   unsigned char srcmac[6] = {0, 0, 0, 0, 0, 0};
-  unsigned char dstmac[6] = {0x00, 0x60, 0x37, 0x12, 0x34, 0x00}; //base mac for FEBs, last byte 0->255
+  // unsigned char dstmac[6] = {0x00, 0x60, 0x37, 0x12, 0x34, 0x00}; //base mac for FEBs, last byte 0->255
+  std::array<unsigned char, 6> dstmac = {0x00, 0x60, 0x37, 0x12, 0x34, 0x00}; //base mac for FEBs, last byte 0->255
   unsigned char brcmac[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
   int nclients = 0;
-  unsigned char macs[256][6]; //list of detected clients
+  // unsigned char macs[256][6]; //list of detected clients
   // modification to this 2D array.
   // ref: https://stackoverflow.com/questions/60950999/how-to-bind-c-structure-with-an-array-of-another-structre-as-a-member-using-pyb
-  // std::array<std::array<unsigned char, 6>, 256> macs;
+  std::array<std::array<unsigned char, 6>, 256> macs;
   int Verbose = 0;
 
   unsigned short VCXO = 500;
@@ -95,7 +98,8 @@ public:
   int sockfd_w = -1;
   int sockfd_r = -1;
   struct timeval tv;
-  void (*fPacketHandler)(int) = 0;
+  // void (*fPacketHandler)(int) = 0;
+  std::function<void(int)> fPacketHandler;
 
   FEBDTP(){};                                 // default constructor
   FEBDTP(const char *iface) { Init(iface); }; //main constructor
@@ -121,7 +125,8 @@ public:
   int WriteBitStreamAnnotated(const char *fname, unsigned char *buf, int bitlen);   // write CITIROC SC bitstream into file
   void WriteLVBitStream(const char *fname, unsigned char *buf, bool rev = false); // write CITIROC SC bitstream from the buffer, buf[MAXPACKLEN], to LabView setup file
   void ReadLVBitStream(const char *fname, unsigned char *buf, bool rev = false);  // write CITIROC SC bitstream from the buffer, buf[MAXPACKLEN], to LabView setup file
-  void setPacketHandler(void (*fhandler)(int) = 0);
+  // void setPacketHandler(void (*fhandler)(int) = 0);
+  void setPacketHandler(const std::function<void(int)> fhandler);
   void PrintMacTable();
 
 };
