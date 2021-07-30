@@ -1,7 +1,7 @@
-# t2k-mppc-daq-v2
-A second iteration of the T2K MPPC DAQ aiming to get rid of ROOT dependency.
+# dt5702daq
+A second iteration of the MPPC bench test DAQ aiming to get rid of ROOT dependency.
 
 ## Packages Installed
 ```
-make pybind11
+make pybind11 pyqt
 ```
