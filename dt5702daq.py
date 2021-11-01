@@ -31,8 +31,8 @@ app.setOrganizationName('LSU')
 app.setApplicationName('dt5702daq')
 
 # import internal libraries
-from UI import mainWindow
+from UI import ui_mainWindow
 
-main_window = mainWindow.MainWindowUI()
+main_window = ui_mainWindow.MainWindowUI()
 main_window.show()
 sys.exit(app.exec_())

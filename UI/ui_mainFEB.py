@@ -17,7 +17,7 @@ class MainFEB(QWidget):
         self.BtnConfFebInUse = QPushButton('Configure')
         self.BtnConfDAQ = QPushButton('Configure')
 
-        groupBox = QGroupBox('FEB config/control')
+        groupBox = QGroupBox('FEB Config/Control')
         grid = QGridLayout()
         grid.addWidget(QLabel('Number of FEBs: '), 0, 0, Qt.AlignRight)
         grid.addWidget(self.EditNFeb, 0, 1)
