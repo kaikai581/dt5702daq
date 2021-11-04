@@ -12,7 +12,13 @@ unalias ll
 alias ll='ls -l --color=auto'
 
 # enable conda
-. /home/hepr2018/sklin/anaconda3/etc/profile.d/conda.sh
+conda_script=(/home/hepr2018/sklin/anaconda3/etc/profile.d/conda.sh /home/kaikai/anaconda3/etc/profile.d/conda.sh)
+for i in "${conda_script[@]}"
+do
+    if [[ -f "$i" ]]; then
+        . $i
+    fi
+done
 
 # activate environment
 conda activate conda-forge
